@@ -1,6 +1,7 @@
 import { ApplicationEntity } from "@/models/ApplicationEntity";
 import { Application, UpsertApplication } from "@/types/api";
 import dbConnect from "../dbConnect";
+import redisConnect from "../redisConnect";
 import { deleteSecretsForApplication } from "./secretService";
 
 export async function getApplications(user_id: string): Promise<Application[]> {
@@ -32,6 +33,9 @@ export async function createApplication(
   });
 
   await application.save();
+
+  const redis = await redisConnect();
+  redis.publish("app-invalidate", JSON.stringify(application.allowed_origins));
 
   return {
     id: application._id as string,
@@ -83,6 +87,9 @@ export async function updateApplication(
 
   await application.save();
 
+  const redis = await redisConnect();
+  redis.publish("app-invalidate", JSON.stringify(application.allowed_origins));
+
   return {
     id: application._id as string,
     name: name,
@@ -102,6 +109,9 @@ export async function deleteApplication(user_id: string, id: string) {
   if (!application) {
     throw new Error("Application not found");
   }
+
+  const redis = await redisConnect();
+  redis.publish("app-invalidate", JSON.stringify(application.allowed_origins));
 
   // Delete all secrets associated with this application
   await deleteSecretsForApplication(user_id, id);
