@@ -14,33 +14,33 @@ export async function getApplications(user_id: string): Promise<Application[]> {
   return applications.map((application) => ({
     id: application._id.toString(),
     name: application.name,
-    allowedOrigins: application.allowed_origins,
+    originDomains: application.origin_domains,
     targetDomains: application.target_domains,
   }));
 }
 
 export async function createApplication(
   user_id: string,
-  { name, allowedOrigins, targetDomains }: UpsertApplication
+  { name, originDomains, targetDomains }: UpsertApplication
 ): Promise<Application> {
   await dbConnect();
 
   const application = new ApplicationEntity({
     user_id: user_id,
     name: name,
-    allowed_origins: allowedOrigins,
+    origin_domains: originDomains,
     target_domains: targetDomains,
   });
 
   await application.save();
 
   const redis = await redisConnect();
-  redis.publish("app-invalidate", JSON.stringify(application.allowed_origins));
+  redis.publish("app-invalidate", JSON.stringify(application.origin_domains));
 
   return {
     id: application._id as string,
     name: name,
-    allowedOrigins: application.allowed_origins,
+    originDomains: application.origin_domains,
     targetDomains: application.target_domains,
   };
 }
@@ -52,15 +52,15 @@ export async function hasApplicationWithOrigins(
   await dbConnect();
 
   const application = await ApplicationEntity.findOne({
-    allowed_origins: { $in: origins },
+    origin_domains: { $in: origins },
     ...(exclude_id ? { _id: { $ne: exclude_id } } : {}),
-  }).select("allowed_origins");
+  }).select("origin_domains");
 
   if (!application) {
     return [];
   }
 
-  return application.allowed_origins.filter((origin) =>
+  return application.origin_domains.filter((origin) =>
     origins.includes(origin)
   );
 }
@@ -68,7 +68,7 @@ export async function hasApplicationWithOrigins(
 export async function updateApplication(
   user_id: string,
   id: string,
-  { name, allowedOrigins, targetDomains }: UpsertApplication
+  { name, originDomains, targetDomains }: UpsertApplication
 ): Promise<Application> {
   await dbConnect();
 
@@ -82,18 +82,18 @@ export async function updateApplication(
   }
 
   application.name = name;
-  application.allowed_origins = allowedOrigins;
+  application.origin_domains = originDomains;
   application.target_domains = targetDomains;
 
   await application.save();
 
   const redis = await redisConnect();
-  redis.publish("app-invalidate", JSON.stringify(application.allowed_origins));
+  redis.publish("app-invalidate", JSON.stringify(application.origin_domains));
 
   return {
     id: application._id as string,
     name: name,
-    allowedOrigins: allowedOrigins,
+    originDomains: originDomains,
     targetDomains: targetDomains,
   };
 }
@@ -111,7 +111,7 @@ export async function deleteApplication(user_id: string, id: string) {
   }
 
   const redis = await redisConnect();
-  redis.publish("app-invalidate", JSON.stringify(application.allowed_origins));
+  redis.publish("app-invalidate", JSON.stringify(application.origin_domains));
 
   // Delete all secrets associated with this application
   await deleteSecretsForApplication(user_id, id);

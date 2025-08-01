@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   DialogHeader,
@@ -64,15 +64,14 @@ export default function ApplicationList({
   const [newApp, setNewApp] = useState<Application>({
     id: "",
     name: "",
-    allowedOrigins: [],
-    targetDomains: [],
+    originDomains: [""],
+    targetDomains: ["*"],
   });
-  const [currentOrigin, setCurrentOrigin] = useState("");
   const [domainMode, setDomainMode] = useState<"all" | "custom">("all");
 
   const [validationErrors, setValidationErrors] = useState({
     name: false,
-    allowedOrigins: false,
+    originDomains: false,
     targetDomains: false,
     invalidOriginFormat: false,
     invalidDomainFormat: false,
@@ -86,50 +85,73 @@ export default function ApplicationList({
     setNewApp({ ...newApp, [e.target.name]: e.target.value });
   };
 
+  const resetValidationErrors = () => {
+    setValidationErrors({
+      name: false,
+      originDomains: false,
+      targetDomains: false,
+      invalidOriginFormat: false,
+      invalidDomainFormat: false,
+    });
+  };
+
   const startEditing = (app: Application) => {
-    setNewApp({ ...app });
+    setNewApp({
+      ...app,
+      // Ensure there's always at least one origin domain
+      originDomains:
+        app.originDomains && app.originDomains.length > 0
+          ? app.originDomains
+          : [""],
+    });
     setIsEditing(true);
     setIsDialogOpen(true);
   };
 
   const startAdding = () => {
+    resetValidationErrors();
     setNewApp({
       id: "",
       name: "",
-      allowedOrigins: [],
-      targetDomains: [],
+      originDomains: [""],
+      targetDomains: [""],
     });
     setIsEditing(false);
     setIsDialogOpen(true);
   };
 
-  const resetForm = () => {
-    setNewApp({
-      id: "",
-      name: "",
-      allowedOrigins: [],
-      targetDomains: [],
-    });
-    setCurrentOrigin("");
-    setDomainMode("all");
-    setIsDialogOpen(false);
-  };
-
-  const validateOriginFormat = (origin: string): boolean => {
-    // Regex to validate origin format: scheme://hostname[:port]
-    const originRegex =
-      /^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\/[a-zA-Z0-9\-._~%]+(?::[0-9]+)?$/;
-    return originRegex.test(origin);
-  };
-
-  const validateDomainFormat = (domain: string): boolean => {
-    // Simple domain validation: something.something
-    if (domain === "*") {
-      return true;
+  const extractDomainFromInput = (input: string): string => {
+    if (!input || !input.trim()) {
+      return "";
     }
+
+    let cleanInput = input.trim();
+    cleanInput = cleanInput.replace(/^(https?:\/\/|\/\/)/i, "");
+    cleanInput = cleanInput.split("/")[0].split("?")[0].split("#")[0];
+    cleanInput = cleanInput.split(":")[0];
+    cleanInput = cleanInput.toLowerCase();
+
+    if (isValidDomain(cleanInput)) {
+      return cleanInput;
+    }
+
+    // If it doesn't match, return the cleaned input anyway
+    // This allows the user to see what we extracted and fix it if needed
+    return input;
+  };
+
+  const isValidDomain = (domain: string): boolean => {
     const domainRegex =
       /^[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)+$/;
     return domainRegex.test(domain);
+  };
+
+  const isValidTargetDomain = (domain: string): boolean => {
+    // Asterisk is only allowed for target domains
+    if (domain === "*") {
+      return true;
+    }
+    return isValidDomain(domain);
   };
 
   // Set the domain mode when editing an application - ONLY when editing begins
@@ -137,7 +159,10 @@ export default function ApplicationList({
     // Only run this effect when editing status changes or when dialog opens
     if (isDialogOpen && isEditing && newApp.targetDomains) {
       // If there's only one URL and it's an asterisk, set mode to "all"
-      if (newApp.targetDomains.length === 1 && newApp.targetDomains[0] === "*") {
+      if (
+        newApp.targetDomains.length === 1 &&
+        newApp.targetDomains[0] === "*"
+      ) {
         setDomainMode("all");
       } else {
         setDomainMode("custom");
@@ -146,50 +171,43 @@ export default function ApplicationList({
       // For new applications, default to "all"
       setDomainMode("all");
     }
-  }, [isDialogOpen, isEditing]); // Remove dependency on newApp.targetDomains
+  }, [isDialogOpen, isEditing]);
 
   const handleSubmit = async () => {
     // Reset validation errors
-    setValidationErrors({
-      name: false,
-      allowedOrigins: false,
-      targetDomains: false,
-      invalidOriginFormat: false,
-      invalidDomainFormat: false,
-    });
+    resetValidationErrors();
 
-    // Get the trimmed current inputs
-    const pendingOrigin = currentOrigin.trim();
+    // Extract and clean origin domains
+    const cleanedOriginDomains = (newApp.originDomains || [])
+      .map((origin) => extractDomainFromInput(origin))
+      .filter((origin) => origin.trim());
 
-    // Validate the format of all origins
-    const allOrigins = [
-      ...(newApp.allowedOrigins || []),
-      ...(pendingOrigin ? [pendingOrigin] : []),
-    ];
-
-    const invalidOrigins = allOrigins.filter(
-      (origin) => !validateOriginFormat(origin)
+    const invalidOriginDomains = cleanedOriginDomains.filter(
+      (origin) => !isValidDomain(origin)
     );
 
-    // Validate domains format if in custom mode
-    let invalidDomains: string[] = [];
+    // Extract and clean target domains if in custom mode
+    let cleanedTargetDomains: string[] = [];
+    let invalidTargetDomains: string[] = [];
+
     if (domainMode === "custom") {
-      const allDomains = [...(newApp.targetDomains || [])].filter(Boolean); // Filter out empty domains
-      invalidDomains = allDomains.filter(
-        (domain) => !validateDomainFormat(domain)
+      cleanedTargetDomains = (newApp.targetDomains || [])
+        .map((domain) => extractDomainFromInput(domain))
+        .filter((domain) => domain.trim());
+
+      invalidTargetDomains = cleanedTargetDomains.filter(
+        (domain) => !isValidTargetDomain(domain)
       );
     }
 
     // Perform validation
     const errors = {
       name: !newApp.name.trim(),
-      allowedOrigins: !newApp.allowedOrigins?.length && !pendingOrigin,
+      originDomains: cleanedOriginDomains.length === 0,
       targetDomains:
-        domainMode === "custom" &&
-        (!newApp.targetDomains?.length ||
-          newApp.targetDomains.every((url) => !url.trim())),
-      invalidOriginFormat: invalidOrigins.length > 0,
-      invalidDomainFormat: invalidDomains.length > 0,
+        domainMode === "custom" && cleanedTargetDomains.length === 0,
+      invalidOriginFormat: invalidOriginDomains.length > 0,
+      invalidDomainFormat: invalidTargetDomains.length > 0,
     };
 
     // Update validation errors state
@@ -201,26 +219,24 @@ export default function ApplicationList({
         description: (
           <ul className="list-disc pl-4">
             {errors.name && <li>Name is required</li>}
-            {errors.allowedOrigins && (
-              <li>At least one allowed origin is required</li>
+            {errors.originDomains && (
+              <li>At least one origin domain is required</li>
             )}
             {errors.targetDomains && (
               <li>At least one allowed domain is required</li>
             )}
-            {invalidOrigins.length > 0 && (
+            {invalidOriginDomains.length > 0 && (
               <li>
-                Invalid origin format: {invalidOrigins.join(", ")}
+                Invalid origin domains: {invalidOriginDomains.join(", ")}
                 <br />
-                <span className="text-xs">
-                  Format should be: scheme://domain[:port]
-                </span>
+                <span className="text-xs">Please check these domains</span>
               </li>
             )}
             {errors.invalidDomainFormat && (
               <li>
-                Invalid domain format: {invalidDomains.join(", ")}
+                Invalid target domains: {invalidTargetDomains.join(", ")}
                 <br />
-                <span className="text-xs">Format should be: domain.tld</span>
+                <span className="text-xs">Please check these domains</span>
               </li>
             )}
           </ul>
@@ -240,22 +256,18 @@ export default function ApplicationList({
       const { id, ...appData } = newApp;
 
       // Prepare domains based on mode
-      let finalDomains: string[];
+      let targetDomains: string[];
       if (domainMode === "all") {
-        finalDomains = ["*"];
+        targetDomains = ["*"];
       } else {
-        // Filter out empty strings
-        finalDomains = (appData.targetDomains || []).filter((url) => url.trim());
+        targetDomains = cleanedTargetDomains;
       }
 
-      // Include current input values in the submission data
+      // Use cleaned domains for submission
       const dataToSubmit = {
         ...appData,
-        allowedOrigins: [
-          ...(appData.allowedOrigins || []),
-          ...(pendingOrigin ? [pendingOrigin] : []),
-        ],
-        targetDomains: finalDomains,
+        originDomains: cleanedOriginDomains,
+        targetDomains: targetDomains,
       };
 
       const endpoint = isEditing ? `/applications/${id}` : "/applications";
@@ -273,7 +285,7 @@ export default function ApplicationList({
             : [...prev, response.data]
         );
         toast(`${isEditing ? "Updated" : "Added"} application successfully`);
-        resetForm();
+        setIsDialogOpen(false);
       } else {
         toast(response.message);
       }
@@ -300,20 +312,44 @@ export default function ApplicationList({
     }
   };
 
-  const addOrigin = () => {
-    if (currentOrigin && !newApp.allowedOrigins?.includes(currentOrigin)) {
-      setNewApp({
-        ...newApp,
-        allowedOrigins: [...(newApp.allowedOrigins || []), currentOrigin],
-      });
-      setCurrentOrigin("");
+  const addNewOrigin = () => {
+    setNewApp((prev) => ({
+      ...prev,
+      originDomains: [...(prev.originDomains || []), ""],
+    }));
+  };
+
+  const updateOrigin = (index: number, value: string) => {
+    setNewApp((prev) => {
+      const newOriginDomains = [...(prev.originDomains || [])];
+      newOriginDomains[index] = value;
+      return {
+        ...prev,
+        originDomains: newOriginDomains,
+      };
+    });
+  };
+
+  const handleOriginBlur = (index: number, value: string) => {
+    if (value.trim()) {
+      const cleanedValue = extractDomainFromInput(value);
+      if (cleanedValue !== value) {
+        updateOrigin(index, cleanedValue);
+      }
     }
   };
 
-  const removeOrigin = (origin: string) => {
-    setNewApp({
-      ...newApp,
-      allowedOrigins: newApp.allowedOrigins?.filter((o) => o !== origin),
+  const removeOrigin = (index: number) => {
+    setNewApp((prev) => {
+      const currentOrigins = prev.originDomains || [];
+      // Don't allow removing if there's only one origin domain
+      if (currentOrigins.length <= 1) {
+        return prev;
+      }
+      return {
+        ...prev,
+        originDomains: prev.originDomains?.filter((_, i) => i !== index),
+      };
     });
   };
 
@@ -334,6 +370,15 @@ export default function ApplicationList({
         targetDomains: newtargetDomains,
       };
     });
+  };
+
+  const handleDomainBlur = (index: number, value: string) => {
+    if (value.trim()) {
+      const cleanedValue = extractDomainFromInput(value);
+      if (cleanedValue !== value) {
+        updateDomain(index, cleanedValue);
+      }
+    }
   };
 
   const removeDomain = (index: number) => {
@@ -378,11 +423,11 @@ export default function ApplicationList({
           </DialogHeader>
           <div className="grid gap-5 py-4">
             <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="applicationName">Application Name</Label>
+              <Label htmlFor="applicationName">Name</Label>
               <Input
                 id="applicationName"
                 name="name"
-                placeholder="Enter application name"
+                placeholder="my app"
                 value={newApp.name}
                 onChange={handleInputChange}
               />
@@ -391,62 +436,59 @@ export default function ApplicationList({
               )}
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="allowedOrigin">Allowed Origins</Label>
+              <Label htmlFor="originDomains">Origin Domains</Label>
               <p className="text-sm text-muted-foreground">
-                Your application base URL: (e.g., https://myapplication.com)
+                Your website domain (e.g., myapplication.com)
               </p>
-              <div className="flex flex-wrap items-center gap-2 border rounded-md min-h-9 text-sm px-3 py-1 focus-within:ring-1 focus-within:ring-ring focus-within:border-input">
-                {newApp.allowedOrigins?.map((origin) => (
-                  <Badge key={origin} variant="secondary">
-                    {origin}
-                    <X
-                      className="h-4 w-4 ml-2 cursor-pointer"
-                      onClick={() => removeOrigin(origin)}
+              <div className="space-y-2 mt-1">
+                {(newApp.originDomains || []).map((origin, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      placeholder="example.com, https://example.com, app.example.com"
+                      value={origin}
+                      onChange={(e) => updateOrigin(index, e.target.value)}
+                      onBlur={(e) => handleOriginBlur(index, e.target.value)}
+                      className="flex-1"
                     />
-                  </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeOrigin(index)}
+                      disabled={(newApp.originDomains || []).length <= 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
-                <input
-                  id="allowedOrigin"
-                  className="flex-1 bg-transparent border-none outline-none"
-                  placeholder={
-                    newApp.allowedOrigins?.length === 0
-                      ? "Enter text and hit space to add multiple values"
-                      : ""
-                  }
-                  value={currentOrigin}
-                  onChange={(e) => setCurrentOrigin(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === " " && currentOrigin.trim()) {
-                      e.preventDefault();
-                      addOrigin();
-                    }
-                    if (
-                      e.key === "Backspace" &&
-                      currentOrigin === "" &&
-                      newApp.allowedOrigins &&
-                      newApp.allowedOrigins.length > 0
-                    ) {
-                      removeOrigin(
-                        newApp.allowedOrigins[newApp.allowedOrigins.length - 1]
-                      );
-                    }
-                  }}
-                />
               </div>
+
               {validationErrors.invalidOriginFormat && (
                 <p className="text-xs text-red-500">
-                  Please use a valid origin format: scheme://domain[:port]
+                  Please enter valid domains. We couldn&apos;t extract valid
+                  domains from some inputs.
                 </p>
               )}
-              {validationErrors.allowedOrigins && (
+              {validationErrors.originDomains && (
                 <p className="text-xs text-red-500">
-                  At least one allowed origin is required
+                  At least one origin domain is required
                 </p>
               )}
+
+              <div>
+                <Button
+                  variant="outline"
+                  onClick={addNewOrigin}
+                  className="text-sm text-muted-foreground"
+                >
+                  <Plus className="size-2" /> Add more
+                </Button>
+              </div>
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="domainMode">Target Domains</Label>
-              <p className="text-sm text-muted-foreground">Enable fetch to:</p>
+              <p className="text-sm text-muted-foreground">
+                Domains you want to fetch (e.g., api.external.com)
+              </p>
               <Select
                 value={domainMode}
                 onValueChange={(value) =>
@@ -458,42 +500,35 @@ export default function ApplicationList({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All domains</SelectItem>
-                  <SelectItem value="custom">Selected domains</SelectItem>
+                  <SelectItem value="custom">Select domains</SelectItem>
                 </SelectContent>
               </Select>
 
               {domainMode === "custom" && (
                 <>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Enter domain names like example.com, app.example.com
-                  </p>
-                  <div className="space-y-2 mt-1">
+                  <div className="space-y-2 mt-3">
                     {(newApp.targetDomains || []).map((domain, index) => (
                       <div key={index} className="flex gap-2 items-center">
                         <Input
-                          placeholder="Enter domain (e.g., example.com)"
+                          placeholder="api.external.com, https://api.external.com/v1"
                           value={domain}
                           onChange={(e) => updateDomain(index, e.target.value)}
+                          onBlur={(e) =>
+                            handleDomainBlur(index, e.target.value)
+                          }
                           className="flex-1"
                         />
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeDomain(index)}
+                          disabled={(newApp.targetDomains || []).length <= 1}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
                   </div>
-
-                  <Button
-                    variant="outline"
-                    onClick={addNewDomain}
-                    className="w-full mt-2"
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Add Domain
-                  </Button>
 
                   {validationErrors.targetDomains && (
                     <p className="text-xs text-red-500">
@@ -502,9 +537,20 @@ export default function ApplicationList({
                   )}
                   {validationErrors.invalidDomainFormat && (
                     <p className="text-xs text-red-500">
-                      Please use a valid domain format: domain.tld
+                      Please enter valid domains. We couldn&apos;t extract valid
+                      domains from some inputs.
                     </p>
                   )}
+
+                  <div>
+                    <Button
+                      variant="outline"
+                      onClick={addNewDomain}
+                      className="text-sm text-muted-foreground"
+                    >
+                      <Plus className="size-2" /> Add more
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
@@ -531,7 +577,7 @@ export default function ApplicationList({
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Allowed Origins</TableHead>
+                <TableHead>Origin Domains</TableHead>
                 <TableHead>Target Domains</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -553,7 +599,7 @@ export default function ApplicationList({
                   <TableCell>{app.name}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {app.allowedOrigins?.map((origin) => (
+                      {app.originDomains?.map((origin) => (
                         <Badge key={origin} variant="secondary">
                           {origin}
                         </Badge>
