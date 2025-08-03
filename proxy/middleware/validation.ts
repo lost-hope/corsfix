@@ -22,7 +22,9 @@ export const validateOriginHeader = (
   next: MiddlewareNext
 ) => {
   const origin = req.header("Origin");
-  if (!origin) {
+  try {
+    new URL(origin);
+  } catch (error) {
     res.header("X-Robots-Tag", "noindex, nofollow");
     return res
       .status(400)
