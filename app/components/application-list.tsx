@@ -223,7 +223,7 @@ export default function ApplicationList({
               <li>At least one origin domain is required</li>
             )}
             {errors.targetDomains && (
-              <li>At least one allowed domain is required</li>
+              <li>At least one target domain is required</li>
             )}
             {invalidOriginDomains.length > 0 && (
               <li>
@@ -421,7 +421,7 @@ export default function ApplicationList({
               {isEditing ? "Edit Application" : "Add New Application"}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-5 py-4">
+          <div className="grid gap-6 py-4">
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="applicationName">Name</Label>
               <Input
@@ -438,13 +438,13 @@ export default function ApplicationList({
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="originDomains">Origin Domains</Label>
               <p className="text-sm text-muted-foreground">
-                Your website domain (e.g., myapplication.com)
+                Your website domain (e.g., acme.com, www.acme.com)
               </p>
               <div className="space-y-2 mt-1">
                 {(newApp.originDomains || []).map((origin, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <Input
-                      placeholder="example.com, https://example.com, app.example.com"
+                      placeholder="acme.com"
                       value={origin}
                       onChange={(e) => updateOrigin(index, e.target.value)}
                       onBlur={(e) => handleOriginBlur(index, e.target.value)}
@@ -506,11 +506,11 @@ export default function ApplicationList({
 
               {domainMode === "custom" && (
                 <>
-                  <div className="space-y-2 mt-3">
+                  <div className="space-y-2">
                     {(newApp.targetDomains || []).map((domain, index) => (
                       <div key={index} className="flex gap-2 items-center">
                         <Input
-                          placeholder="api.external.com, https://api.external.com/v1"
+                          placeholder="api.external.com"
                           value={domain}
                           onChange={(e) => updateDomain(index, e.target.value)}
                           onBlur={(e) =>
@@ -532,7 +532,7 @@ export default function ApplicationList({
 
                   {validationErrors.targetDomains && (
                     <p className="text-xs text-red-500">
-                      At least one allowed domain is required
+                      At least one target domain is required
                     </p>
                   )}
                   {validationErrors.invalidDomainFormat && (

@@ -415,7 +415,7 @@ export default function SecretList({
                 : "Add a new secret to your application."}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-4">
             <div className="grid gap-2">
               <Label htmlFor="application">Application</Label>
               <Select defaultValue={newSecret.application_id} disabled>
