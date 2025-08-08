@@ -7,11 +7,13 @@ import {
 } from "./lib/util";
 import dbConnect from "./lib/dbConnect";
 import "dotenv/config";
-import { getApplication, registerAppInvalidateCacheHandlers } from "./lib/services/applicationService";
+import {
+  getApplication,
+  registerAppInvalidateCacheHandlers,
+} from "./lib/services/applicationService";
 import {
   validateOriginHeader,
   validatePayloadSize,
-  validateQueryParams,
   validateUrl,
 } from "./middleware/validation";
 import { handlePreflight } from "./middleware/preflight";
@@ -44,18 +46,17 @@ app.use("/", (req: Request, res: Response, next: MiddlewareNext) => {
   next();
 });
 
-app.use("/", validateQueryParams);
-app.use("/", handlePreflight);
-
+app.use("/", handleMetrics);
 app.use("/", validatePayloadSize);
 
 app.use("/", validateOriginHeader);
 app.use("/", validateUrl);
 
-app.use("/", handleMetrics);
+app.use("/", handlePreflight);
+
 app.use("/", handleRateLimit);
 
-app.any("/", async (req: CorsfixRequest, res: Response) => {
+app.any("/*", async (req: CorsfixRequest, res: Response) => {
   const { url: targetUrl } = getProxyRequest(req);
   const origin = req.header("Origin");
 
@@ -150,12 +151,20 @@ app.any("/", async (req: CorsfixRequest, res: Response) => {
 
     return res.end();
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === "AbortError") {
+    const { name, message, cause } = error as Error;
+    if (name === "AbortError" || name === "TimeoutError") {
       res
         .status(504)
         .end(
           "Corsfix: Timeout fetching the target URL. Check documentation for timeout limits. (https://corsfix.com/docs/cors-proxy/api)"
         );
+    } else if (message === "fetch failed") {
+      if ((cause as any).code === "ENOTFOUND") {
+        res.status(404).end("Corsfix: Target URL not found.");
+      } else {
+        console.error("Fetch error occurred.", error);
+        res.status(502).end("Corsfix: Unable to reach target URL.");
+      }
     } else {
       console.error("Unknown error occurred.", error);
       res.status(500).end("Corsfix: Unknown error occurred.");

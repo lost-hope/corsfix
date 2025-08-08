@@ -39,18 +39,25 @@ export function isRegisteredOrigin(origin: string, url: string): boolean {
   );
 }
 
-export const getProxyRequest = (req: Request): ProxyRequest => {
-  const params = req.query_parameters;
+const processUrlString = (urlString: string): URL => {
+  const processedUrl = /^https?:\/\//.test(urlString)
+    ? urlString
+    : `https://${urlString}`;
+  return new URL(decodeURIComponent(processedUrl));
+};
 
-  if ("url" in params) {
-    return {
-      url: new URL(decodeURIComponent(params.url)),
-    };
+export const getProxyRequest = (req: Request): ProxyRequest => {
+  let inputUrl: string;
+
+  if (req.path !== "/") {
+    inputUrl = req.path.substring(1);
+  } else if ("url" in req.query_parameters) {
+    inputUrl = req.query_parameters.url;
   } else {
-    return {
-      url: new URL(decodeURIComponent(req.path_query)),
-    };
+    inputUrl = req.path_query;
   }
+
+  return { url: processUrlString(inputUrl) };
 };
 
 export const getPreviousMidnightEpoch = (): number => {
