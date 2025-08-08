@@ -25,7 +25,6 @@ export function isLocalOrigin(origin: string): boolean {
     /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/,
     /^https?:\/\/0\.0\.0\.0(:\d+)?$/,
     /^https:\/\/corsfix\.com$/,
-    /^https:\/\/.*\.corsfix\.com$/,
   ];
   return localOriginPatterns.some((pattern) => pattern.test(origin));
 }
