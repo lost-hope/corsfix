@@ -4,10 +4,16 @@ import {
   hasApplicationWithOrigins,
 } from "@/lib/services/applicationService";
 import { authorize } from "@/lib/services/authorizationService";
-import { UpsertApplication, ApiResponse, Application } from "@/types/api";
+import {
+  UpsertApplication,
+  ApiResponse,
+  Application,
+  UpsertApplicationSchema,
+} from "@/types/api";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUserId } from "@/lib/utils";
+import * as z from "zod";
 
 export async function PUT(
   request: NextRequest,
@@ -27,9 +33,11 @@ export async function PUT(
     );
   }
 
-  const body: UpsertApplication = await request.json();
+  const json = await request.json();
+  const body: UpsertApplication = UpsertApplicationSchema.parse(json);
 
-  const id = (await params).id;
+  const paramId = (await params).id;
+  const id = z.string().max(32).parse(paramId);
 
   const existingOrigins = await hasApplicationWithOrigins(
     id,
@@ -73,7 +81,8 @@ export async function DELETE(
     );
   }
 
-  const id = (await params).id;
+  const paramId = (await params).id;
+  const id = z.string().max(32).parse(paramId);
 
   return NextResponse.json<ApiResponse<void>>({
     data: await deleteApplication(idToken, id),

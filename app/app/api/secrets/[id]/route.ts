@@ -1,4 +1,9 @@
-import { ApiResponse, SecretItem, UpsertSecret } from "@/types/api";
+import {
+  ApiResponse,
+  SecretItem,
+  UpsertSecret,
+  UpsertSecretSchema,
+} from "@/types/api";
 import { NextRequest, NextResponse } from "next/server";
 import { getKek } from "@/lib/utils";
 import { authorize } from "@/lib/services/authorizationService";
@@ -9,6 +14,7 @@ import {
 } from "@/lib/services/secretService";
 import { auth } from "@/auth";
 import { getUserId } from "@/lib/utils";
+import * as z from "zod";
 
 export async function PUT(
   request: NextRequest,
@@ -29,8 +35,11 @@ export async function PUT(
       );
     }
 
-    const body: UpsertSecret = await request.json();
-    const secretId = (await params).id;
+    const json = await request.json();
+    const body: UpsertSecret = UpsertSecretSchema.parse(json);
+
+    const paramId = (await params).id;
+    const secretId = z.string().max(32).parse(paramId);
 
     // Check if a secret with the same name already exists for this application (excluding current secret)
     const secretExists = await secretExistsForApplication(
@@ -115,7 +124,8 @@ export async function DELETE(
       );
     }
 
-    const secretId = (await params).id;
+    const paramId = (await params).id;
+    const secretId = z.string().max(32).parse(paramId);
 
     // Delete secret using the secretService
     await deleteSecret(idToken, secretId);
