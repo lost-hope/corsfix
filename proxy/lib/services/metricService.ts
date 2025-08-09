@@ -78,6 +78,8 @@ const processBatchMetrics = async (events: MetricEvent[]): Promise<void> => {
   const aggregatedEntries = Array.from(aggregatedMetrics.values());
 
   if (aggregatedEntries.length > 0) {
+    const time = Date.now();
+    console.log(`Start writing metrics at ${time}`);
     const bulkOps = aggregatedEntries.map(
       ({ userId, origin, date, count, bytes }) => ({
         updateOne: {
@@ -90,7 +92,9 @@ const processBatchMetrics = async (events: MetricEvent[]): Promise<void> => {
 
     await UserOriginDailyEntity.bulkWrite(bulkOps);
     console.log(
-      `Processed ${aggregatedEntries.length} aggregated metrics from ${events.length} events in a single bulk operation`
+      `Processed ${aggregatedEntries.length} aggregated metrics from ${
+        events.length
+      } events in a single bulk operation (took ${Date.now() - time} ms)`
     );
   }
 };
