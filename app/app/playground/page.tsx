@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Plus, Trash2, Code, Info } from "lucide-react";
+import { Plus, Trash2, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -591,17 +591,14 @@ export default function Playground() {
             >
               <div className="flex gap-2">
                 {EXAMPLE_PRESETS.map((preset) => (
-                  <Button
+                  <Badge
                     key={preset.id}
-                    variant="outline"
-                    size="sm"
                     onClick={() => applyPreset(preset)}
-                    className="flex items-center gap-1 whitespace-nowrap"
+                    className="flex whitespace-nowrap cursor-pointer"
                     data-umami-event={`playground-example-${preset.id}`}
                   >
                     {preset.name}
-                    <Info className="h-3 w-3 ml-1 text-muted-foreground" />
-                  </Button>
+                  </Badge>
                 ))}
               </div>
             </div>

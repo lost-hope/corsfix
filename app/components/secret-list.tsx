@@ -305,10 +305,9 @@ export default function SecretList({
                 </Button>
               </div>
               {appUsingAllowedAllDomains(app) && (
-                <span className="text-sm text-yellow-500">
-                  This application target domains is set to All Domains (*),
-                  your secrets could be exposed. <br />
-                  For better security, restrict access to specific domains only.
+                <span className="text-sm text-yellow-600">
+                  Warning: Protect your secrets from being leaked by specifying
+                  target domains for this application.
                 </span>
               )}
             </CardHeader>

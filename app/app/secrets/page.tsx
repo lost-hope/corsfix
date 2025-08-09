@@ -4,7 +4,7 @@ import { Application } from "@/types/api";
 import { getActiveSubscription } from "@/lib/services/subscriptionService";
 import { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenText, CircleHelp } from "lucide-react";
+import { CircleHelp, ExternalLink, KeyRound } from "lucide-react";
 import { getApplicationSecrets } from "@/lib/services/secretService";
 import { auth } from "@/auth";
 import { getUserId } from "@/lib/utils";
@@ -38,14 +38,21 @@ export default async function SecretsPage() {
     <>
       <Nav />
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-2">Secrets</h1>
+        <h1 className="text-3xl font-bold mb-4 inline-flex items-center">
+          <KeyRound size={28} className="mr-2" />
+          Secrets
+        </h1>
+        <p className="text-muted-foreground mb-1">
+          Add API keys, access tokens, and other secrets to use with your web
+          application.
+        </p>
         <Link
           href="https://corsfix.com/docs/dashboard/secrets"
           target="_blank"
-          className="inline-flex items-center gap-1 text-xs mb-8 border px-2 py-1 rounded-full text-violet-400 border-violet-400 bg-muted font-medium hover:bg-background transition-colors"
+          className="inline-block text-violet-500 hover:text-secondary-foreground transition-colors underline mb-6"
         >
-          <BookOpenText size={14} />
-          Secrets documentation
+          Secrets documentation{" "}
+          <ExternalLink size={24} className="inline pb-1" />
         </Link>
         <SecretList
           initialApplications={initialApplications}
@@ -58,7 +65,7 @@ export default async function SecretsPage() {
             Need help? Let us know at{" "}
             <a
               href="mailto:rey@corsfix.com"
-              className="text-violet-400 bg-muted px-1 py-0.5 rounded-md font-medium"
+              className="text-violet-500 underline p-0.5 font-medium"
             >
               rey@corsfix.com
             </a>

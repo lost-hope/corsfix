@@ -607,19 +607,21 @@ export default function ApplicationList({
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {app.originDomains?.map((origin) => (
-                        <Badge key={origin} variant="secondary">
-                          {origin}
-                        </Badge>
+                        <Badge key={origin}>{origin}</Badge>
                       ))}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {app.targetDomains?.map((url) => (
-                        <Badge key={url} variant="secondary">
-                          {url}
-                        </Badge>
-                      ))}
+                      {app.targetDomains && app.targetDomains.includes("*") ? (
+                        <Badge variant="secondary">All domains</Badge>
+                      ) : (
+                        app.targetDomains?.map((url) => (
+                          <Badge key={url} variant="secondary">
+                            {url}
+                          </Badge>
+                        ))
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

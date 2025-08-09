@@ -1,6 +1,7 @@
 import {
   ActivityIcon,
   Check,
+  CreditCard,
   PackageIcon,
   SettingsIcon,
   SquareArrowOutUpRight,
@@ -70,7 +71,10 @@ export default async function CreditsPage() {
     <>
       <Nav />
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-6">Billing</h1>
+        <h1 className="text-3xl font-bold mb-4 inline-flex items-center">
+          <CreditCard size={28} className="mr-2" />
+          Billing
+        </h1>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
           <Card>

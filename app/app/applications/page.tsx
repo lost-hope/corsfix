@@ -5,7 +5,7 @@ import { getActiveSubscription } from "@/lib/services/subscriptionService";
 import { Application } from "@/types/api";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenText, CircleHelp } from "lucide-react";
+import { CircleHelp, ExternalLink, Globe } from "lucide-react";
 import { auth } from "@/auth";
 import { getUserId } from "@/lib/utils";
 import { IS_CLOUD } from "@/config/constants";
@@ -34,14 +34,20 @@ export default async function ApplicationsPage() {
     <>
       <Nav />
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-2">Applications</h1>{" "}
+        <h1 className="text-3xl font-bold mb-4 inline-flex items-center">
+          <Globe size={28} className="mr-2" />
+          Applications
+        </h1>
+        <p className="text-muted-foreground mb-1">
+          Use Corsfix in your website by adding your domain.
+        </p>
         <Link
           href="https://corsfix.com/docs/dashboard/application"
           target="_blank"
-          className="inline-flex items-center gap-1 text-xs mb-8 border px-2 py-1 rounded-full text-violet-400 border-violet-400 bg-muted font-medium hover:bg-background transition-colors"
+          className="inline-block text-violet-500 hover:text-secondary-foreground transition-colors underline mb-6"
         >
-          <BookOpenText size={14} />
-          Applications documentation
+          Applications documentation{" "}
+          <ExternalLink size={24} className="inline pb-1" />
         </Link>
         <ApplicationList
           initialApplications={initialApplications}
@@ -54,7 +60,7 @@ export default async function ApplicationsPage() {
             Need help? Let us know at{" "}
             <a
               href="mailto:rey@corsfix.com"
-              className="text-violet-400 bg-muted px-1 py-0.5 rounded-md font-medium"
+              className="text-violet-500 underline p-0.5 font-medium"
             >
               rey@corsfix.com
             </a>

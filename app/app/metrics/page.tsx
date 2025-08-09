@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Activity } from "lucide-react";
+import { BarChart3, Activity, ChartLine } from "lucide-react";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { getUserId } from "@/lib/utils";
@@ -44,9 +44,10 @@ export default async function MetricsPage() {
     <>
       <Nav />
       <div className="p-4">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="text-3xl font-bold mb-4 inline-flex items-center">
+          <ChartLine size={28} className="mr-2" />
           <h1 className="text-3xl font-bold">Metrics</h1>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="ml-2 text-xs">
             Preview
           </Badge>
         </div>
