@@ -1,9 +1,5 @@
 import Nav from "@/components/nav";
-import {
-  getMetrics,
-  formatBytes,
-  formatNumber,
-} from "@/lib/services/metricService";
+import { getMetrics } from "@/lib/services/metricService";
 import {
   Card,
   CardContent,
@@ -15,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart3, Activity, ChartLine } from "lucide-react";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
-import { getUserId } from "@/lib/utils";
+import { formatBytes, formatNumber, getUserId } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Metrics | Corsfix Dashboard",
@@ -44,13 +40,13 @@ export default async function MetricsPage() {
     <>
       <Nav />
       <div className="p-4">
-        <div className="text-3xl font-bold mb-4 inline-flex items-center">
+        <h1 className="text-2xl font-bold mb-4 inline-flex items-center">
           <ChartLine size={28} className="mr-2" />
-          <h1 className="text-3xl font-bold">Metrics</h1>
+          Metrics
           <Badge variant="outline" className="ml-2 text-xs">
             Preview
           </Badge>
-        </div>
+        </h1>
         <p className="text-muted-foreground mb-6">
           Track your API usage and bandwidth consumption
         </p>

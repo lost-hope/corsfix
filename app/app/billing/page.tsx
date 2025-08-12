@@ -1,9 +1,10 @@
 import {
-  ActivityIcon,
+  Activity,
+  BarChart3,
   Check,
   CreditCard,
+  Infinity,
   PackageIcon,
-  SettingsIcon,
   SquareArrowOutUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Nav from "@/components/nav";
 import Link from "next/link";
 import { getActiveSubscription } from "@/lib/services/subscriptionService";
-import { config, IS_CLOUD } from "@/config/constants";
-import { cn, getUserId } from "@/lib/utils";
+import { config, freeTierLimit, IS_CLOUD } from "@/config/constants";
+import { cn, formatBytes, getUserId } from "@/lib/utils";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
+import { getMonthToDateMetrics } from "@/lib/services/metricService";
 
 function getCustomerCheckoutLink(
   baseLink: string | null | undefined,
@@ -30,18 +32,18 @@ function getCustomerCheckoutLink(
 }
 
 const freeBenefits = [
-  "Unlimited proxy requests",
-  "Localhost web applications only",
-  "60 RPM (per IP)",
-  "Limited data transfer",
-  "Best effort support",
+  `${freeTierLimit.req_count} proxy requests`,
+  `${freeTierLimit.app_count} web application(s)`,
+  `${formatBytes(freeTierLimit.bytes)} data transfer`,
+  `${freeTierLimit.rpm} RPM (per IP)`,
+  `${freeTierLimit.secret_count} secret variable(s)`,
 ];
 
 const paidBenefits = [
   "Unlimited proxy requests",
   "Unlimited web applications",
+  "{{bandwidth}} data transfer",
   "{{rpm}} RPM (per IP)",
-  "{{bandwidth}} GB data transfer",
   "Cached response",
   "Secrets variable",
   "Priority support",
@@ -54,15 +56,24 @@ export const metadata: Metadata = {
 export default async function CreditsPage() {
   const session = await auth();
 
-  let idToken, activeSubscription;
+  let idToken, activeSubscription, bandwidthMtd, requestsMtd;
 
   try {
     idToken = getUserId(session);
     activeSubscription = await getActiveSubscription(idToken);
+    const metricsMtd = await getMonthToDateMetrics(idToken);
+    bandwidthMtd = metricsMtd.bytes;
+    requestsMtd = metricsMtd.req_count;
   } catch (error: unknown) {
     console.error(JSON.stringify(error, null, 2));
     idToken = null;
-    activeSubscription = { active: false, name: "Free" };
+    activeSubscription = {
+      active: false,
+      name: "Free",
+      bandwidth: freeTierLimit.bytes,
+    };
+    bandwidthMtd = 0;
+    requestsMtd = 0;
   }
 
   const isOnFreePlan = !activeSubscription.active;
@@ -71,7 +82,7 @@ export default async function CreditsPage() {
     <>
       <Nav />
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-4 inline-flex items-center">
+        <h1 className="text-2xl font-bold mb-4 inline-flex items-center">
           <CreditCard size={28} className="mr-2" />
           Billing
         </h1>
@@ -80,25 +91,12 @@ export default async function CreditsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Subscription Status
-              </CardTitle>
-              <ActivityIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {IS_CLOUD && activeSubscription.active ? "Active" : "Inactive"}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
                 Current Plan
               </CardTitle>
               <PackageIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold mt-3">
                 {IS_CLOUD
                   ? activeSubscription.name.charAt(0).toUpperCase() +
                     activeSubscription.name.slice(1)
@@ -108,42 +106,92 @@ export default async function CreditsPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Subscription & Billing
-              </CardTitle>
-              <SettingsIcon className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Requests</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {IS_CLOUD && activeSubscription.active ? (
-                <Link
-                  href="/api/portal"
-                  target="_blank"
-                  className="text-primary hover:underline"
-                >
-                  <Button
-                    data-umami-event="billing-manage"
-                    className="flex items-center gap-2"
-                  >
-                    Manage <SquareArrowOutUpRight />
-                  </Button>
-                </Link>
-              ) : (
-                <Button
-                  data-umami-event="billing-manage"
-                  className="flex items-center gap-2"
-                  disabled={true}
-                >
-                  Manage <SquareArrowOutUpRight />
-                </Button>
-              )}
+              <div className="mt-3 space-y-1">
+                <div className="w-full bg-secondary rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: isOnFreePlan
+                        ? `${Math.min(
+                            Math.ceil(
+                              (requestsMtd / freeTierLimit.req_count) * 100
+                            ),
+                            100
+                          )}%`
+                        : "100%",
+                    }}
+                  ></div>
+                </div>
+                <div className="flex items-center justify-between">
+                  {isOnFreePlan ? (
+                    <>
+                      <div className="text-sm">
+                        {new Date().toLocaleDateString("en-US", {
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </div>
+                      <span>
+                        {requestsMtd}&nbsp;/&nbsp;
+                        {freeTierLimit.req_count}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm">You have unlimited requests</div>
+                      <Infinity />
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Data Transfer
+              </CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="mt-3 space-y-1">
+                <div className="w-full bg-secondary rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.min(
+                        Math.ceil(
+                          (bandwidthMtd / activeSubscription.bandwidth) * 100
+                        ),
+                        100
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm">
+                    {new Date().toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </div>
+                  <span>
+                    {formatBytes(bandwidthMtd)}&nbsp;/&nbsp;
+                    {formatBytes(activeSubscription.bandwidth)}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Available Plans */}
         {IS_CLOUD && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Available Plans</h2>
+          <div className="mt-6">
+            <h2 className="text-2xl font-bold mb-6">Plans</h2>
             <div className="flex flex-row -mx-4 items-stretch overflow-x-auto snap-x snap-mandatory">
               <div
                 key={"free"}
@@ -157,7 +205,7 @@ export default async function CreditsPage() {
                 >
                   <CardHeader className="flex-none">
                     <div className="flex justify-between items-center">
-                      <CardTitle>Free</CardTitle>
+                      <CardTitle className="text-xl">Free</CardTitle>
                       {isOnFreePlan && (
                         <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
                           Current Plan
@@ -198,7 +246,7 @@ export default async function CreditsPage() {
                     >
                       <CardHeader className="flex-none">
                         <div className="flex justify-between items-center">
-                          <CardTitle>
+                          <CardTitle className="text-xl">
                             {product.name.charAt(0).toUpperCase() +
                               product.name.slice(1)}
                           </CardTitle>
@@ -227,7 +275,7 @@ export default async function CreditsPage() {
                                   .replace("{{rpm}}", product.rpm.toString())
                                   .replace(
                                     "{{bandwidth}}",
-                                    product.bandwidth.toString()
+                                    formatBytes(product.bandwidth)
                                   )}
                               </span>
                             </li>
@@ -247,11 +295,25 @@ export default async function CreditsPage() {
                                 className="w-full"
                                 data-umami-event={`pricing-${product.name.toLowerCase()}`}
                               >
-                                Select Plan
+                                Upgrade
                               </Button>
                             </Link>
                           </div>
                         )}
+                        {IS_CLOUD &&
+                          activeSubscription.active &&
+                          activeSubscription.name == product.name && (
+                            <div className="mt-6 flex-none">
+                              <Link href="/api/portal" target="_blank">
+                                <Button
+                                  data-umami-event="billing-manage"
+                                  className="w-full flex items-center gap-2"
+                                >
+                                  Manage <SquareArrowOutUpRight />
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
                       </CardContent>
                     </Card>
                   </div>

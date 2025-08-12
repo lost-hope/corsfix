@@ -21,7 +21,7 @@ const configList: Record<string, Config> = {
         name: "lite",
         price: "5",
         rpm: 60,
-        bandwidth: 25,
+        bandwidth: 25_000_000_000,
         link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_wHdNRksqy8ahDKsr8ZNRRwp3OrBTYbbhmUTF4edt7po/redirect",
       },
       {
@@ -29,7 +29,7 @@ const configList: Record<string, Config> = {
         name: "plus",
         price: "8",
         rpm: 120,
-        bandwidth: 100,
+        bandwidth: 100_000_000_000,
         link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_EK7Yv6QfrWNqPY6VaabXlBhQN5lgPKPXJqbRP0ayrzt/redirect",
       },
       {
@@ -37,7 +37,7 @@ const configList: Record<string, Config> = {
         name: "pro",
         price: "15",
         rpm: 180,
-        bandwidth: 500,
+        bandwidth: 500_000_000_000,
         link: "https://sandbox-api.polar.sh/v1/checkout-links/polar_cl_cz1JZMI0bfbyR6JDoVNueY8jS3IqSER0W6lZncWHn10/redirect",
       },
     ],
@@ -49,7 +49,7 @@ const configList: Record<string, Config> = {
         name: "lite",
         price: "5",
         rpm: 60,
-        bandwidth: 25,
+        bandwidth: 25_000_000_000,
         link: "https://buy.polar.sh/polar_cl_LZVMGvtQccxLnJrQ1Vc1JhRhXGAHpyzACkfAXyY6Xmg",
       },
       {
@@ -57,7 +57,7 @@ const configList: Record<string, Config> = {
         name: "plus",
         price: "8",
         rpm: 120,
-        bandwidth: 100,
+        bandwidth: 100_000_000_000,
         link: "https://buy.polar.sh/polar_cl_Abgv-MARys_rNjEtr4kJWLGh3YkvNNlWlATlCEbMrE4",
       },
       {
@@ -65,11 +65,27 @@ const configList: Record<string, Config> = {
         name: "pro",
         price: "15",
         rpm: 180,
-        bandwidth: 500,
+        bandwidth: 500_000_000_000,
         link: "https://buy.polar.sh/polar_cl_LtOUp84qHVmYo0hQ1oj0qdyYsOZ5U6HQNePjUrD6hVM",
       },
     ],
   },
+};
+
+interface FreeTierLimit {
+  req_count: number;
+  bytes: number;
+  app_count: number;
+  secret_count: number;
+  rpm: number;
+}
+
+export const freeTierLimit: FreeTierLimit = {
+  req_count: 500,
+  bytes: 50_000_000,
+  app_count: 3,
+  secret_count: 1,
+  rpm: 60,
 };
 
 export const config = configList[ENV];

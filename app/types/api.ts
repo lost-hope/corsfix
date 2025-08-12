@@ -34,6 +34,7 @@ export interface Subscription {
   name: string;
   product_id?: string;
   customer_id: string;
+  bandwidth: number;
   active: boolean;
 }
 
@@ -46,6 +47,11 @@ export const UpsertSecretSchema = z.object({
 
 export type UpsertSecret = z.input<typeof UpsertSecretSchema>;
 
+export interface AuthorizationResult {
+  allowed: boolean;
+  message?: string;
+}
+
 export interface DeleteSecret {
   application_id: string;
 }
@@ -54,4 +60,9 @@ export interface ApiResponse<T> {
   data: T;
   message: string;
   success: boolean;
+}
+
+export interface Metric {
+  req_count: number;
+  bytes: number;
 }

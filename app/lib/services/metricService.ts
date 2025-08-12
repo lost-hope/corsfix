@@ -1,3 +1,4 @@
+import { Metric } from "@/types/api";
 import { UserOriginDailyEntity } from "../../models/UserOriginDailyEntity";
 import dbConnect from "../dbConnect";
 
@@ -132,26 +133,50 @@ export async function getMetrics(userId: string): Promise<MetricsData> {
   }
 }
 
-// Helper function to format bytes into human-readable format
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+export const getMonthToDateMetrics = async (
+  userId: string
+): Promise<Metric> => {
+  const now = new Date();
 
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const startOfMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  );
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
+  const startOfNextMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
+  );
 
-// Helper function to format large numbers
-export function formatNumber(num: number): string {
-  if (num === 0) return "0";
+  const result = await UserOriginDailyEntity.aggregate([
+    {
+      $match: {
+        user_id: userId,
+        date: {
+          $gte: startOfMonth,
+          $lt: startOfNextMonth,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        req_count: { $sum: "$req_count" },
+        bytes: { $sum: "$bytes" },
+      },
+    },
+  ]);
 
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + "M";
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + "K";
+  let metrics: Metric;
+  if (result.length > 0) {
+    metrics = {
+      req_count: result[0].req_count || 0,
+      bytes: result[0].bytes || 0,
+    };
+  } else {
+    metrics = {
+      req_count: 0,
+      bytes: 0,
+    };
   }
 
-  return num.toString();
-}
+  return metrics;
+};

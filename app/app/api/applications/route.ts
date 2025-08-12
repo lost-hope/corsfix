@@ -17,11 +17,12 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   const idToken = getUserId(session);
 
-  if (!(await authorize(idToken, "manage_applications"))) {
+  const authz = await authorize(idToken, "add_applications");
+  if (!authz.allowed) {
     return NextResponse.json<ApiResponse<null>>(
       {
         data: null,
-        message: "Unauthorized",
+        message: authz.message || "Unauthorized",
         success: false,
       },
       { status: 403 }
