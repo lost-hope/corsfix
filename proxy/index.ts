@@ -133,7 +133,7 @@ app.any("/*", async (req: CorsfixRequest, res: Response) => {
       responseHeaders.set("Cache-Control", "public, max-age=3600");
     }
 
-    if (req.ctx_free || isLocalOrigin(origin)) {
+    if (req.ctx_free) {
       req.ctx_cache = false;
       responseHeaders.set("Cache-Control", "no-store");
     }
