@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogFooter,
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -379,13 +378,6 @@ export default function ApplicationList({
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <div className="flex flex-col items-start gap-4 mb-6">
-          <DialogTrigger asChild>
-            <Button data-umami-event="application-add" onClick={startAdding}>
-              <Plus className="mr-2 h-4 w-4" /> Add New Application
-            </Button>
-          </DialogTrigger>
-        </div>
         <DialogContent className="max-w-[425px] mx-1">
           <DialogHeader>
             <DialogTitle>
@@ -548,7 +540,16 @@ export default function ApplicationList({
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Applications</CardTitle>
+          <CardTitle className="flex justify-between items-center">
+            Your Applications
+            <Button
+              size="sm"
+              data-umami-event="application-add"
+              onClick={startAdding}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Application
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
