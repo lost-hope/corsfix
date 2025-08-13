@@ -47,6 +47,14 @@ export const UpsertSecretSchema = z.object({
 
 export type UpsertSecret = z.input<typeof UpsertSecretSchema>;
 
+export const GetMetricsSchema = z.object({
+  yearMonth: z.string().regex(/^\d{4}-\d{2}$/, {
+    message: "Invalid year month format. Expected YYYY-MM",
+  }),
+});
+
+export type GetMetrics = z.input<typeof GetMetricsSchema>;
+
 export interface AuthorizationResult {
   allowed: boolean;
   message?: string;
@@ -63,6 +71,12 @@ export interface ApiResponse<T> {
 }
 
 export interface Metric {
+  req_count: number;
+  bytes: number;
+}
+
+export interface MetricPoint {
+  date: Date;
   req_count: number;
   bytes: number;
 }
