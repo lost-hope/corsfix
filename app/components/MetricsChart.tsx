@@ -231,7 +231,7 @@ export default function MetricsChart() {
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={normalizedChartData}
-              margin={{ top: -15, right: -15, left: -15, bottom: -15 }}
+              margin={{ right: -15, left: -15 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
@@ -303,7 +303,7 @@ export default function MetricsChart() {
                   return null;
                 }}
               />
-              <Legend 
+              <Legend
                 onClick={(entry) => {
                   if (entry.dataKey === "requests") {
                     handleShowRequestsChange(!showRequests);
@@ -311,7 +311,7 @@ export default function MetricsChart() {
                     handleShowBytesChange(!showBytes);
                   }
                 }}
-                wrapperStyle={{ cursor: 'pointer' }}
+                wrapperStyle={{ cursor: "pointer" }}
               />
               <Line
                 yAxisId="left"
