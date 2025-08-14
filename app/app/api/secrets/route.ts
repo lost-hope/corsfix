@@ -1,18 +1,25 @@
-import {
-  ApiResponse,
-  SecretItem,
-  UpsertSecret,
-  UpsertSecretSchema,
-} from "@/types/api";
+import { ApiResponse, SecretItem } from "@/types/api";
 import { NextRequest, NextResponse } from "next/server";
-import { getKek } from "@/lib/utils";
-import { authorize } from "@/lib/services/authorizationService";
-import {
-  createSecret,
-  secretExistsForApplication,
-} from "@/lib/services/secretService";
 import { auth } from "@/auth";
-import { getUserId } from "@/lib/utils";
+import { getUserId, getKek } from "@/lib/utils";
+import {
+  manageApplicationSecrets,
+  getSecretsForApplication,
+} from "@/lib/services/secretService";
+import { authorize } from "@/lib/services/authorizationService";
+import * as z from "zod";
+
+const ManageSecretsSchema = z.object({
+  application_id: z.string().max(32),
+  secrets: z.array(
+    z.object({
+      id: z.string().optional(),
+      name: z.string().max(64),
+      value: z.string().max(255).nullable(),
+      delete: z.boolean().optional(),
+    })
+  ),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,20 +39,32 @@ export async function POST(request: NextRequest) {
     }
 
     const json = await request.json();
-    const body: UpsertSecret = UpsertSecretSchema.parse(json);
+    const body = ManageSecretsSchema.parse(json);
 
-    // Check if a secret with the same name already exists for this application
-    const secretExists = await secretExistsForApplication(
-      idToken,
-      body.application_id,
-      body.name
-    );
+    // Validation
+    const errors: string[] = [];
+    const secretNames = new Set<string>();
 
-    if (secretExists) {
+    for (const secret of body.secrets) {
+      if (!secret.name.trim()) continue; // Skip empty names
+      
+      // Check for duplicate names
+      if (secretNames.has(secret.name)) {
+        errors.push(`Duplicate secret name: ${secret.name}`);
+      }
+      secretNames.add(secret.name);
+
+      // Check if new secret (no ID) without value
+      if (!secret.id && !secret.value?.trim()) {
+        errors.push(`New secret "${secret.name}" must have a value`);
+      }
+    }
+
+    if (errors.length > 0) {
       return NextResponse.json<ApiResponse<null>>(
         {
           data: null,
-          message: "A secret with this name already exists.",
+          message: errors.join(', '),
           success: false,
         },
         { status: 400 }
@@ -64,12 +83,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create secret using the secretService
-    const secret = await createSecret(idToken, kek, body);
+    await manageApplicationSecrets(
+      idToken,
+      kek,
+      body.application_id,
+      body.secrets
+    );
 
-    return NextResponse.json<ApiResponse<SecretItem>>({
-      data: secret,
-      message: "success",
+    // Return updated secrets for this application
+    const secrets = await getSecretsForApplication(
+      idToken,
+      body.application_id
+    );
+
+    return NextResponse.json<ApiResponse<SecretItem[]>>({
+      data: secrets,
+      message: "Secrets managed successfully",
       success: true,
     });
   } catch (error) {
