@@ -48,7 +48,7 @@ Start using Corsfix in your web applications.
 
 ### Setup allowed origin and domain
 
-![Setup allowed origin and domain](https://assets.corsfix.com/u5m0gkt.png)
+![Setup allowed origin and domain](https://assets.corsfix.com/r9zlfef.png)
 
 ### Manage secrets
 
@@ -68,7 +68,7 @@ Start using Corsfix in your web applications.
 
 ### Performance Metrics
 
-![Performance Metrics](https://assets.corsfix.com/f3tg8t.png)
+![Performance Metrics](https://assets.corsfix.com/s6d5kce.png)
 
 ## ⚡️ Demo
 
