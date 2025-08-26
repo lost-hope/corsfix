@@ -50,9 +50,9 @@ Start using Corsfix in your web applications.
 
 ![Setup allowed origin and domain](https://assets.corsfix.com/r9zlfef.png)
 
-### Manage secrets
+### Manage and use API key securely
 
-![Manage secrets](https://assets.corsfix.com/bpsdspx.png)
+![Manage secrets](https://assets.corsfix.com/8it4qqb.png)
 
 ### Override request headers
 
