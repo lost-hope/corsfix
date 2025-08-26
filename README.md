@@ -44,7 +44,7 @@ Start using Corsfix in your web applications.
 
 ### Bypass CORS errors
 
-![Bypass CORS errors](https://assets.corsfix.com/zfiuqk9.png)
+![Bypass CORS errors](https://assets.corsfix.com/v6sc7ld.png)
 
 ### Setup allowed origin and domain
 
