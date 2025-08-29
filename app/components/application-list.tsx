@@ -17,6 +17,12 @@ import {
   TableCell,
   Table,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { Application } from "@/types/api";
 import { Button } from "@/components/ui/button";
@@ -578,9 +584,25 @@ export default function ApplicationList({
                   <TableCell>{app.name}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {app.originDomains?.map((origin) => (
-                        <Badge key={origin}>{origin}</Badge>
-                      ))}
+                      {app.originDomains?.[0] && (
+                        <Badge>{app.originDomains[0]}</Badge>
+                      )}
+                      {app.originDomains && app.originDomains.length > 1 && (
+                        <TooltipProvider>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline">+{app.originDomains.length - 1}</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-muted text-muted-foreground border shadow-sm">
+                              <div className="max-w-xs">
+                                {app.originDomains.slice(1).map((domain, index) => (
+                                  <div key={index}>{domain}</div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -588,11 +610,27 @@ export default function ApplicationList({
                       {app.targetDomains && app.targetDomains.includes("*") ? (
                         <Badge variant="secondary">All domains</Badge>
                       ) : (
-                        app.targetDomains?.map((url) => (
-                          <Badge key={url} variant="secondary">
-                            {url}
-                          </Badge>
-                        ))
+                        <>
+                          {app.targetDomains?.[0] && (
+                            <Badge variant="secondary">{app.targetDomains[0]}</Badge>
+                          )}
+                          {app.targetDomains && app.targetDomains.length > 1 && (
+                            <TooltipProvider>
+                              <Tooltip delayDuration={100}>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline">+{app.targetDomains.length - 1}</Badge>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-muted text-muted-foreground border shadow-sm">
+                                  <div className="max-w-xs">
+                                    {app.targetDomains.slice(1).map((domain, index) => (
+                                      <div key={index}>{domain}</div>
+                                    ))}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>
