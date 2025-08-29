@@ -70,10 +70,10 @@ export default async function GetStarted() {
               <div className="flex w-full flex-col md:flex-row md:mb-0">
                 <div className="w-full md:w-1/2">
                   <h3 className="text-xl font-semibold mb-2">
-                    Use Corsfix in your application
+                    Use Corsfix in your website
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Integrate with your existing code and hosting platform.
+                    Add Corsfix proxy in your code, no API keys required.
                   </p>
                   <div className="my-6 md:mb-0">
                     <Link
@@ -93,7 +93,7 @@ export default async function GetStarted() {
                       className="ml-2"
                     >
                       <Button variant="secondary">
-                        Integrations{" "}
+                        Hosting platform{" "}
                         <ExternalLink size={16} className="inline" />
                       </Button>
                     </Link>
@@ -102,7 +102,7 @@ export default async function GetStarted() {
                 <div className="w-full md:w-1/2 flex items-center overflow-x-auto">
                   <pre className="overflow-x-auto text-sm w-full border px-2 md:px-3 py-4 rounded-lg">
                     <code lang="javascript">
-                      {`// basic usage with fetch
+                      {`// Example usage with fetch
 const url = "https://api.example.com"
 fetch("https://proxy.corsfix.com/?" + url);`}
                     </code>
