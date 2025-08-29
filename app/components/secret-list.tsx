@@ -299,7 +299,7 @@ export default function SecretList({ initialApplications }: SecretListProps) {
               </CardTitle>
               {hasNoTargetDomains && (
                 <div className="text-sm text-yellow-600">
-                  Warning: Protect your secrets from being leaked by specifying
+                  Warning: Protect your secrets from being exposed by specifying
                   target domains for this application.
                 </div>
               )}
