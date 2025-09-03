@@ -1,14 +1,11 @@
 <div align="center">
-  <p><a href="https://corsfix.com"><img src="https://assets.corsfix.com/ig8k4n6.png" height="100" alt="Corsfix"></a></p>
-
-  <p>Open source and secure CORS proxy platform</p>
-
+  <p><a href="https://corsfix.com"><img src="https://corsfix.com/landing.jpg" alt="Corsfix"></a></p>
   <p>
-    <a href="https://corsfix.com">Website</a> | 
-    <a href="#%EF%B8%8F-demo">Demo</a> | 
-    <a href="https://corsfix.com/docs">Documentation</a> | 
-    <a href="https://discord.gg/WEAeqrRjp2">Discord</a> | 
-    <a href="#AGPL-3.0-1-ov-file">License</a> | 
+    <a href="https://corsfix.com">Website</a> &bull; 
+    <a href="#%EF%B8%8F-demo">Demo</a> &bull; 
+    <a href="https://corsfix.com/docs">Documentation</a> &bull; 
+    <a href="https://discord.gg/WEAeqrRjp2">Discord</a> &bull; 
+    <a href="#AGPL-3.0-1-ov-file">License</a> &bull; 
     <a href="CONTRIBUTING.md">Contributing</a>
   </p>
 </div>
